@@ -1,0 +1,14 @@
+README.md
+  h_e8785b7a9ac0be 61,63,75,81,83,103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.10",
+  "base_commit_sha": "12b4aea346dc2ea4592f4e4d5af4be8fc07631ca",
+  "prompts": {},
+  "humans": {
+    "h_e8785b7a9ac0be": {
+      "author": "BharathVasanth12 <bharath.vasanthkumar@gmail.com>"
+    }
+  }
+}
