@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attrition Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 2px solid #e9ecef;
+            position: fixed;
+            left: -320px;
+            top: 0;
+            height: 100vh;
+            width: 300px;
+            overflow-y: auto;
+            transition: left 0.3s ease;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            left: 10px;
+            top: 100px;
+            z-index: 999;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            padding-right: 20px;
+        }
+
+        .sidebar-toggle.active {
+            left: 310px;
+        }
+
+        .sidebar-close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+
+        .sidebar-close:hover {
+            color: #333;
+        }
+
+        .sidebar h2 {
+            color: #4b79a1;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .sidebar h3 {
+            color: #4b79a1;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar p, .sidebar ul {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .sidebar ul {
+            padding-left: 20px;
+        }
+
+        .content {
+            padding: 30px;
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .result.stay {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .result.leave {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .result-details {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: normal;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .sidebar {
+                width: 280px;
+                left: -300px;
+            }
+
+            .sidebar-toggle.active {
+                left: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="sidebar-toggle" id="sidebarToggle">📘</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>📊 Employee Attrition Prediction Dashboard</h1>
+            <p>Predict whether an employee is likely to stay or leave using HR, education & workplace information</p>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <button class="sidebar-close" id="sidebarClose">&times;</button>
+            <h2>📘 About This App</h2>
+            <p>
+                This dashboard predicts whether an employee is likely to 
+                <strong>Stay</strong> or <strong>Leave</strong> the company based on:
+            </p>
+            <ul>
+                <li>Personal background</li>
+                <li>Educational qualifications</li>
+                <li>Job satisfaction & performance</li>
+                <li>Workplace factors like overtime, commute, and recognition</li>
+            </ul>
+
+            <h3>🎯 Problem Statement</h3>
+            <p>
+                Employee attrition is one of the biggest challenges in HR analytics.  
+                Replacing an employee costs nearly <strong>50–250% of their salary</strong>.  
+                This model helps organizations predict potential attrition early.
+            </p>
+
+            <h3>🧠 How It Works</h3>
+            <p>
+                Your inputs are processed using:
+            </p>
+            <ul>
+                <li>Binary Encoding</li>
+                <li>Ordinal Encoding</li>
+                <li>One-Hot Encoding</li>
+                <li>Feature Scaling</li>
+            </ul>
+            <p>
+                The final prediction is made using a 
+                <strong>Gradient Boosting Classification Model</strong> with hyperparameter tuning 
+                (learning_rate=0.1, max_depth=3, n_estimators=200, subsample=0.7) achieving 
+                <strong>74.5% F1-Score</strong> on test data (75.4% train, 75.8% 10-fold CV).
+            </p>
+
+            <h3>🔐 Data Privacy</h3>
+            <p>
+                This app processes the data <strong>only for prediction</strong>.  
+                No information is stored or shared.
+            </p>
+        </div>
+
+        <div style="display: block;">
+            <div class="content">
+                <form id="predictionForm">
+                    <!-- Personal Details Section -->
+                    <div class="section-title">🧍 Personal Details</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="age">Age *</label>
+                            <input type="number" id="age" name="age" min="18" max="65" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender *</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">-- Select Gender --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="marital_status">Marital Status *</label>
+                            <select id="marital_status" name="marital_status" required>
+                                <option value="">-- Select Status --</option>
+                                <option value="Married">Married</option>
+                                <option value="Single">Single</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="num_dependents">Number of Dependents *</label>
+                            <input type="number" id="num_dependents" name="num_dependents" min="0" max="10" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="distance_home">Distance from Home (km) *</label>
+                            <input type="number" id="distance_home" name="distance_home" min="0" max="200" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="remote_work">Remote Work *</label>
+                            <select id="remote_work" name="remote_work" required>
+                                <option value="">-- Select Option --</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Education Details Section -->
+                    <div class="section-title">🎓 Education & Career Level</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="education_level">Education Level *</label>
+                            <select id="education_level" name="education_level" required>
+                                <option value="">-- Select Education --</option>
+                                <option value="High School">High School</option>
+                                <option value="Associate Degree">Associate Degree</option>
+                                <option value="Bachelor's Degree">Bachelor's Degree</option>
+                                <option value="Master's Degree">Master's Degree</option>
+                                <option value="PhD">PhD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="job_level">Job Level *</label>
+                            <select id="job_level" name="job_level" required>
+                                <option value="">-- Select Level --</option>
+                                <option value="Entry">Entry</option>
+                                <option value="Mid">Mid</option>
+                                <option value="Senior">Senior</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="job_role">Job Role *</label>
+                            <select id="job_role" name="job_role" required>
+                                <option value="">-- Select Role --</option>
+                                <option value="Education">Education</option>
+                                <option value="Media">Media</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Finance">Finance</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Professional Details Section -->
+                    <div class="section-title">🏢 Workplace & Performance Details</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="years_company">Years at Company *</label>
+                            <input type="number" id="years_company" name="years_company" min="0" max="40" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="company_tenure">Company Tenure (years) *</label>
+                            <input type="number" id="company_tenure" name="company_tenure" min="0" max="40" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="num_promotions">Number of Promotions *</label>
+                            <input type="number" id="num_promotions" name="num_promotions" min="0" max="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="monthly_income">Monthly Income *</label>
+                            <input type="number" id="monthly_income" name="monthly_income" min="1000" max="300000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="overtime">Overtime *</label>
+                            <select id="overtime" name="overtime" required>
+                                <option value="">-- Select Option --</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="work_life_balance">Work-Life Balance *</label>
+                            <select id="work_life_balance" name="work_life_balance" required>
+                                <option value="">-- Select Balance --</option>
+                                <option value="Poor">Poor</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Good">Good</option>
+                                <option value="Excellent">Excellent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="job_satisfaction">Job Satisfaction *</label>
+                            <select id="job_satisfaction" name="job_satisfaction" required>
+                                <option value="">-- Select Satisfaction --</option>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Very High">Very High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="performance_rating">Performance Rating *</label>
+                            <select id="performance_rating" name="performance_rating" required>
+                                <option value="">-- Select Rating --</option>
+                                <option value="Low">Low</option>
+                                <option value="Below Average">Below Average</option>
+                                <option value="Average">Average</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="company_size">Company Size *</label>
+                            <select id="company_size" name="company_size" required>
+                                <option value="">-- Select Size --</option>
+                                <option value="Small">Small</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Large">Large</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="company_reputation">Company Reputation *</label>
+                            <select id="company_reputation" name="company_reputation" required>
+                                <option value="">-- Select Reputation --</option>
+                                <option value="Poor">Poor</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Good">Good</option>
+                                <option value="Excellent">Excellent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="employee_recognition">Employee Recognition *</label>
+                            <select id="employee_recognition" name="employee_recognition" required>
+                                <option value="">-- Select Recognition --</option>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Very High">Very High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="leadership_opportunities">Leadership Opportunities *</label>
+                            <select id="leadership_opportunities" name="leadership_opportunities" required>
+                                <option value="">-- Select Option --</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="innovation_opportunities">Innovation Opportunities *</label>
+                            <select id="innovation_opportunities" name="innovation_opportunities" required>
+                                <option value="">-- Select Option --</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">🔍 Predict Attrition</button>
+                </form>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing data...</p>
+                </div>
+
+                <div id="result" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarToggle.classList.toggle('active');
+        });
+
+        sidebarClose.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarToggle.classList.remove('active');
+        });
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target) && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                sidebarToggle.classList.remove('active');
+            }
+        });
+
+        // Form submission
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('result').style.display = 'none';
+            
+            try {
+                const formData = new FormData(e.target);
+                const data = {};
+                
+                // Convert form data to object with proper types
+                formData.forEach((value, key) => {
+                    // Convert numeric fields
+                    if (['age', 'num_dependents', 'distance_home', 'years_company', 
+                         'company_tenure', 'num_promotions', 'monthly_income'].includes(key)) {
+                        data[key] = parseInt(value);
+                    } else {
+                        data[key] = value;
+                    }
+                });
+                
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Prediction failed');
+                }
+                
+                const result = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').classList.remove('active');
+                
+                // Show result
+                const resultDiv = document.getElementById('result');
+                const isLeave = result.prediction === 'Will Leave';
+                
+                resultDiv.className = `result ${isLeave ? 'leave' : 'stay'}`;
+                resultDiv.innerHTML = `
+                    <div style="font-size: 28px; margin-bottom: 10px;">
+                        ${isLeave ? '🚨' : '✅'} ${result.prediction}
+                    </div>
+                    <div class="result-details">
+                        <strong>Probability of Leaving:</strong> ${(result.probability_leave * 100).toFixed(1)}%<br>
+                        <strong>Probability of Staying:</strong> ${(result.probability_stay * 100).toFixed(1)}%<br>
+                        <strong>Risk Level:</strong> ${result.risk_level}
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                
+                // Scroll to result
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.className = 'result leave';
+                resultDiv.innerHTML = `
+                    <div>❌ Error</div>
+                    <div class="result-details">
+                        Failed to get prediction. Please try again.
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

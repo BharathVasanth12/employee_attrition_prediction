@@ -1,0 +1,9 @@
+artifact_location: file:///Users/bhavasan/learning/ML-Projects/employee_attrition_prediction/mlruns_validation/0
+creation_time: 1782213329053
+effective_trace_archival_retention: null
+experiment_id: '0'
+last_update_time: 1782213329053
+lifecycle_stage: active
+name: Default
+trace_location: null
+workspace: default
